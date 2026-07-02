@@ -54,10 +54,10 @@
       btnNew.textContent = 'Новая игра';
       controls.appendChild(btnNew);
 
-      const modeBtn = document.createElement('button');
-      modeBtn.className = 'shop-tab';
-      modeBtn.textContent = 'Против робота';
-      controls.appendChild(modeBtn);
+      const difficultyBtn = document.createElement('button');
+      difficultyBtn.className = 'shop-tab';
+      difficultyBtn.textContent = 'Легко';
+      controls.appendChild(difficultyBtn);
 
       const resultDiv = document.createElement('div');
       resultDiv.style.textAlign = 'center';
@@ -72,7 +72,7 @@
       board.style.margin = '0 auto';
       body.appendChild(board);
 
-      let mode = 'vsBot';
+      let difficulty = 'easy'; // easy, medium, hard
       let state;
 
       const newGame = () => {
@@ -94,7 +94,7 @@
             if(!state.over) {
               state.turn = state.turn === 'X' ? 'O' : 'X';
               render();
-              if(!state.over && mode === 'vsBot' && state.turn === 'O') {
+              if(!state.over && state.turn === 'O') {
                 setTimeout(() => {
                   botMove();
                   state.turn = 'X';
@@ -136,51 +136,93 @@
         const c = state.cells;
         const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
         
-        // Победить
-        for(const l of lines) {
-          const [a,b,d] = l;
-          const vals = [c[a], c[b], c[d]];
-          if(vals.filter(x => x === 'O').length === 2 && vals.includes(null)) {
-            const idx = [a,b,d][vals.indexOf(null)];
-            c[idx] = 'O';
+        if(difficulty === 'hard') {
+          // Лучшая игра: победить, защитить, центр, углы
+          // Победить
+          for(const l of lines) {
+            const [a,b,d] = l;
+            const vals = [c[a], c[b], c[d]];
+            if(vals.filter(x => x === 'O').length === 2 && vals.includes(null)) {
+              const idx = [a,b,d][vals.indexOf(null)];
+              c[idx] = 'O';
+              return;
+            }
+          }
+          
+          // Защитить
+          for(const l of lines) {
+            const [a,b,d] = l;
+            const vals = [c[a], c[b], c[d]];
+            if(vals.filter(x => x === 'X').length === 2 && vals.includes(null)) {
+              const idx = [a,b,d][vals.indexOf(null)];
+              c[idx] = 'O';
+              return;
+            }
+          }
+          
+          // Центр - стратегическая позиция
+          if(c[4] === null) { c[4] = 'O'; return; }
+          
+          // Противоположные углы - продвинутая тактика
+          const oppPairs = [[0,8],[2,6]];
+          for(const [a,b] of oppPairs) {
+            if(c[a] === 'X' && c[b] === null) { c[b] = 'O'; return; }
+            if(c[b] === 'X' && c[a] === null) { c[a] = 'O'; return; }
+          }
+          
+          // Углы
+          const corners = [0,2,6,8];
+          const availCorners = corners.filter(i => c[i] === null);
+          if(availCorners.length) {
+            c[availCorners[Math.floor(Math.random() * availCorners.length)]] = 'O';
             return;
           }
-        }
-        
-        // Защитить
-        for(const l of lines) {
-          const [a,b,d] = l;
-          const vals = [c[a], c[b], c[d]];
-          if(vals.filter(x => x === 'X').length === 2 && vals.includes(null)) {
-            const idx = [a,b,d][vals.indexOf(null)];
-            c[idx] = 'O';
-            return;
+          
+          // Стороны
+          const sides = [1,3,5,7];
+          const avail = sides.filter(i => c[i] === null);
+          if(avail.length) {
+            c[avail[Math.floor(Math.random() * avail.length)]] = 'O';
           }
         }
-        
-        // Центр
-        if(c[4] === null) { c[4] = 'O'; return; }
-        
-        // Противоположные углы
-        const oppPairs = [[0,8],[2,6]];
-        for(const [a,b] of oppPairs) {
-          if(c[a] === 'X' && c[b] === null) { c[b] = 'O'; return; }
-          if(c[b] === 'X' && c[a] === null) { c[a] = 'O'; return; }
+        else if(difficulty === 'medium') {
+          // Примерно 70% делает хороший ход, 30% рандом
+          if(Math.random() < 0.7) {
+            // Победить
+            for(const l of lines) {
+              const [a,b,d] = l;
+              const vals = [c[a], c[b], c[d]];
+              if(vals.filter(x => x === 'O').length === 2 && vals.includes(null)) {
+                const idx = [a,b,d][vals.indexOf(null)];
+                c[idx] = 'O';
+                return;
+              }
+            }
+            
+            // Защитить
+            for(const l of lines) {
+              const [a,b,d] = l;
+              const vals = [c[a], c[b], c[d]];
+              if(vals.filter(x => x === 'X').length === 2 && vals.includes(null)) {
+                const idx = [a,b,d][vals.indexOf(null)];
+                c[idx] = 'O';
+                return;
+              }
+            }
+          }
+          
+          // Рандомный ход
+          const avail = c.map((v, i) => v === null ? i : null).filter(x => x !== null);
+          if(avail.length) {
+            c[avail[Math.floor(Math.random() * avail.length)]] = 'O';
+          }
         }
-        
-        // Углы
-        const corners = [0,2,6,8];
-        const availCorners = corners.filter(i => c[i] === null);
-        if(availCorners.length) {
-          c[availCorners[Math.floor(Math.random() * availCorners.length)]] = 'O';
-          return;
-        }
-        
-        // Стороны
-        const sides = [1,3,5,7];
-        const avail = sides.filter(i => c[i] === null);
-        if(avail.length) {
-          c[avail[Math.floor(Math.random() * avail.length)]] = 'O';
+        else { // easy
+          // Просто случайный ход
+          const avail = c.map((v, i) => v === null ? i : null).filter(x => x !== null);
+          if(avail.length) {
+            c[avail[Math.floor(Math.random() * avail.length)]] = 'O';
+          }
         }
       };
 
@@ -196,9 +238,13 @@
       };
 
       btnNew.onclick = () => newGame();
-      modeBtn.onclick = () => {
-        mode = mode === 'vsBot' ? 'pvp' : 'vsBot';
-        modeBtn.textContent = mode === 'vsBot' ? 'Против робота' : 'Для двоих';
+      difficultyBtn.onclick = () => {
+        const levels = ['easy', 'medium', 'hard'];
+        const names = ['Легко', 'Среднее', 'Сложно'];
+        const idx = levels.indexOf(difficulty);
+        const nextIdx = (idx + 1) % levels.length;
+        difficulty = levels[nextIdx];
+        difficultyBtn.textContent = names[nextIdx];
         newGame();
       };
 
@@ -412,6 +458,12 @@
       title.style.marginBottom = '15px';
       body.appendChild(title);
 
+      const difficultyBtn = document.createElement('button');
+      difficultyBtn.className = 'shop-tab';
+      difficultyBtn.textContent = 'Уровень: Легко';
+      difficultyBtn.style.marginBottom = '15px';
+      body.appendChild(difficultyBtn);
+
       const info = document.createElement('div');
       info.style.textAlign = 'center';
       info.style.marginBottom = '15px';
@@ -452,6 +504,7 @@
       let boardState = startPos.map(row => [...row]);
       let selected = null;
       let whiteTurn = true;
+      let difficulty = 'easy';
 
       const isValidMove = (fr, fc, tr, tc, turn) => {
         const piece = boardState[fr][fc];
@@ -582,7 +635,7 @@
           setTimeout(() => {
             makeBlackMove();
             whiteTurn = true;
-            info.textContent = 'Белые: Ваш ��од';
+            info.textContent = 'Белые: Ваш ход';
             render();
           }, 1000);
         }
@@ -596,19 +649,66 @@
               for(let tr = 0; tr < 8; tr++) {
                 for(let tc = 0; tc < 8; tc++) {
                   if(isValidMove(r, c, tr, tc, false)) {
-                    moves.push([r, c, tr, tc]);
+                    const captureVal = boardState[tr][tc] ? 2 : 0;
+                    const piece = boardState[r][c];
+                    const targetPiece = boardState[tr][tc];
+                    
+                    // Оценка хода в зависимости от типа фигуры
+                    let score = captureVal;
+                    if(piece[1] === 'P' && tr === 7) score += 10; // Превращение пешки
+                    if(targetPiece) {
+                      // Ценность захватываемых фигур
+                      const values = {'P': 1, 'N': 3, 'B': 3, 'R': 5, 'Q': 9, 'K': 0};
+                      score += values[targetPiece[1]] || 0;
+                    }
+                    
+                    moves.push({from: [r,c], to: [tr,tc], score: score});
                   }
                 }
               }
             }
           }
         }
+        
         if(moves.length > 0) {
-          const [fr, fc, tr, tc] = moves[Math.floor(Math.random() * moves.length)];
+          let move;
+          if(difficulty === 'hard') {
+            // Выбираем ход с лучшим score
+            moves.sort((a, b) => b.score - a.score);
+            move = moves[0];
+          } else if(difficulty === 'medium') {
+            // 60% лучший ход, 40% рандом
+            if(Math.random() < 0.6) {
+              moves.sort((a, b) => b.score - a.score);
+              move = moves[0];
+            } else {
+              move = moves[Math.floor(Math.random() * moves.length)];
+            }
+          } else {
+            // easy - полностью рандом
+            move = moves[Math.floor(Math.random() * moves.length)];
+          }
+          
+          const [fr, fc] = move.from;
+          const [tr, tc] = move.to;
           boardState[tr][tc] = boardState[fr][fc];
           boardState[fr][fc] = null;
           if(boardState[tr][tc] === 'bP' && tr === 7) boardState[tr][tc] = 'bQ';
         }
+      };
+
+      difficultyBtn.onclick = () => {
+        const levels = ['easy', 'medium', 'hard'];
+        const names = ['Легко', 'Среднее', 'Сложно'];
+        const idx = levels.indexOf(difficulty);
+        const nextIdx = (idx + 1) % levels.length;
+        difficulty = levels[nextIdx];
+        difficultyBtn.textContent = 'Уровень: ' + names[nextIdx];
+        boardState = startPos.map(row => [...row]);
+        selected = null;
+        whiteTurn = true;
+        info.textContent = 'Белые (вы): Ваш ход';
+        render();
       };
 
       render();
@@ -624,6 +724,12 @@
       title.textContent = '⚫ Шашки (русские)';
       title.style.marginBottom = '15px';
       body.appendChild(title);
+
+      const difficultyBtn = document.createElement('button');
+      difficultyBtn.className = 'shop-tab';
+      difficultyBtn.textContent = 'Уровень: Легко';
+      difficultyBtn.style.marginBottom = '15px';
+      body.appendChild(difficultyBtn);
 
       const info = document.createElement('div');
       info.style.textAlign = 'center';
@@ -646,6 +752,7 @@
       body.appendChild(board);
 
       let boardState = Array(8).fill(null).map(() => Array(8).fill(null));
+      let difficulty = 'easy';
       
       // Инициализация
       for(let r = 0; r < 3; r++) {
@@ -821,7 +928,7 @@
 
         if(!whiteTurn) {
           setTimeout(() => {
-            makeRandomMove();
+            makeAIMove();
             whiteTurn = true;
             info.textContent = 'Белые: Ваш ход';
             captureAvailable = false;
@@ -830,7 +937,7 @@
         }
       };
 
-      const makeRandomMove = () => {
+      const makeAIMove = () => {
         const moves = [];
         const captures = [];
 
@@ -855,26 +962,92 @@
           }
         }
 
-        // Приоритет: съедание
-        const moveList = captures.length > 0 ? captures : moves;
+        let moveList = captures.length > 0 ? captures : moves;
         
         if(moveList.length > 0) {
-          const move = moveList[Math.floor(Math.random() * moveList.length)];
-          if(move.length === 6) {
-            // Съедание
-            const [fr, fc, tr, tc, mr, mc] = move;
+          let selectedMove;
+          
+          if(difficulty === 'hard') {
+            // Выбор умного хода: захват > атака на короля > развитие
+            if(captures.length > 0) {
+              // Приоритет: съесть больше фигур, достичь конца доски
+              captures.sort((a, b) => {
+                const [, , tr1, tc1] = a;
+                const [, , tr2, tc2] = b;
+                // Ценность достижения конца доски (tr=0)
+                return (tr1 === 0 ? 1000 : 0) - (tr2 === 0 ? 1000 : 0);
+              });
+              selectedMove = captures[0];
+            } else {
+              moveList.sort((a, b) => {
+                const [, , tr1, tc1] = a;
+                const [, , tr2, tc2] = b;
+                // Стремимся к центру и вперёд
+                const centerDist1 = Math.abs(tr1 - 3.5) + Math.abs(tc1 - 3.5);
+                const centerDist2 = Math.abs(tr2 - 3.5) + Math.abs(tc2 - 3.5);
+                const forwardBonus1 = -tr1 * 2;
+                const forwardBonus2 = -tr2 * 2;
+                return (centerDist1 + forwardBonus1) - (centerDist2 + forwardBonus2);
+              });
+              selectedMove = moveList[0];
+            }
+          } else if(difficulty === 'medium') {
+            // 65% умные ходы, 35% рандом
+            if(Math.random() < 0.65 && captures.length > 0) {
+              selectedMove = captures[Math.floor(Math.random() * captures.length)];
+            } else if(Math.random() < 0.5) {
+              moveList.sort((a, b) => {
+                const [, , tr1] = a;
+                const [, , tr2] = b;
+                return -tr1 - (-tr2); // Стремимся вперёд
+              });
+              selectedMove = moveList[0];
+            } else {
+              selectedMove = moveList[Math.floor(Math.random() * moveList.length)];
+            }
+          } else {
+            // easy - просто рандом
+            selectedMove = moveList[Math.floor(Math.random() * moveList.length)];
+          }
+
+          if(selectedMove.length === 6) {
+            const [fr, fc, tr, tc, mr, mc] = selectedMove;
             boardState[tr][tc] = boardState[fr][fc];
             boardState[fr][fc] = null;
             boardState[mr][mc] = null;
             if(boardState[tr][tc] === 'b' && tr === 0) boardState[tr][tc] = 'bK';
           } else {
-            // Простой ход
-            const [fr, fc, tr, tc] = move;
+            const [fr, fc, tr, tc] = selectedMove;
             boardState[tr][tc] = boardState[fr][fc];
             boardState[fr][fc] = null;
             if(boardState[tr][tc] === 'b' && tr === 0) boardState[tr][tc] = 'bK';
           }
         }
+      };
+
+      difficultyBtn.onclick = () => {
+        const levels = ['easy', 'medium', 'hard'];
+        const names = ['Легко', 'Среднее', 'Сложно'];
+        const idx = levels.indexOf(difficulty);
+        const nextIdx = (idx + 1) % levels.length;
+        difficulty = levels[nextIdx];
+        difficultyBtn.textContent = 'Уровень: ' + names[nextIdx];
+        
+        boardState = Array(8).fill(null).map(() => Array(8).fill(null));
+        for(let r = 0; r < 3; r++) {
+          for(let c = 0; c < 8; c++) {
+            if((r + c) % 2 === 1) boardState[r][c] = 'b';
+          }
+        }
+        for(let r = 5; r < 8; r++) {
+          for(let c = 0; c < 8; c++) {
+            if((r + c) % 2 === 1) boardState[r][c] = 'w';
+          }
+        }
+        selected = null;
+        whiteTurn = true;
+        info.textContent = 'Белые: Ваш ход';
+        render();
       };
 
       render();
@@ -1022,6 +1195,12 @@
       title.style.marginBottom = '15px';
       body.appendChild(title);
 
+      const difficultyBtn = document.createElement('button');
+      difficultyBtn.className = 'shop-tab';
+      difficultyBtn.textContent = 'Уровень: Легко';
+      difficultyBtn.style.marginBottom = '15px';
+      body.appendChild(difficultyBtn);
+
       const info = document.createElement('div');
       info.style.textAlign = 'center';
       info.style.marginBottom = '15px';
@@ -1070,9 +1249,12 @@
       let enemyCells = Array(size * size).fill(0);
       let playerHealth = 6;
       let enemyHealth = 6;
+      let difficulty = 'easy';
+      let lastHitIdx = -1;
+      let hitStreak = [];
 
       const placeShips = (cells) => {
-        const ships = [3, 2, 1]; // 3-палубный, 2-палубный, 1-палубный
+        const ships = [3, 2, 1];
         ships.forEach(len => {
           let placed = false;
           while(!placed) {
@@ -1153,10 +1335,13 @@
             if(enemyCells[i] === 1) {
               enemyCells[i] = 3;
               enemyHealth--;
+              lastHitIdx = i;
               info.textContent = '✓ Попадание!';
               if(enemyHealth === 0) {
                 this.award(40, 20);
                 info.innerHTML = '<div class="game-result-win">🎉 Все корабли потоплены! +40 монет</div>';
+              } else {
+                setTimeout(() => botAttack(), 1000);
               }
             } else {
               enemyCells[i] = 2;
@@ -1171,11 +1356,72 @@
       };
 
       const botAttack = () => {
-        const available = playerCells.map((v, i) => v === 0 || v === 1 ? i : null).filter(x => x !== null);
-        if(available.length > 0) {
-          const idx = available[Math.floor(Math.random() * available.length)];
+        let idx;
+        
+        if(difficulty === 'hard') {
+          // Умная атака: ищем и охотимся за корабль
+          if(lastHitIdx >= 0 && playerCells[lastHitIdx] === 2) {
+            const r = Math.floor(lastHitIdx / size);
+            const c = lastHitIdx % size;
+            
+            // Проверяем соседние клетки в направлении удара
+            const neighbors = [
+              r > 0 ? lastHitIdx - size : -1,
+              r < size - 1 ? lastHitIdx + size : -1,
+              c > 0 ? lastHitIdx - 1 : -1,
+              c < size - 1 ? lastHitIdx + 1 : -1
+            ].filter(x => x >= 0 && (playerCells[x] === 0 || playerCells[x] === 1));
+            
+            if(neighbors.length > 0) {
+              idx = neighbors[Math.floor(Math.random() * neighbors.length)];
+            }
+          }
+          
+          if(!idx && idx !== 0) {
+            // Паттернная атака - атакуем через клетку для максимальной вероятности
+            const available = [];
+            for(let i = 0; i < size * size; i++) {
+              if(playerCells[i] === 0 || playerCells[i] === 1) {
+                const r = Math.floor(i / size);
+                const c = i % size;
+                if((r + c) % 2 === 0) available.push(i); // Шахматный паттерн
+              }
+            }
+            idx = available.length > 0 ? available[Math.floor(Math.random() * available.length)] : -1;
+          }
+        }
+        else if(difficulty === 'medium') {
+          // 60% умная атака, 40% рандом
+          if(lastHitIdx >= 0 && Math.random() < 0.6) {
+            const r = Math.floor(lastHitIdx / size);
+            const c = lastHitIdx % size;
+            const neighbors = [
+              r > 0 ? lastHitIdx - size : -1,
+              r < size - 1 ? lastHitIdx + size : -1,
+              c > 0 ? lastHitIdx - 1 : -1,
+              c < size - 1 ? lastHitIdx + 1 : -1
+            ].filter(x => x >= 0 && (playerCells[x] === 0 || playerCells[x] === 1));
+            
+            if(neighbors.length > 0) {
+              idx = neighbors[Math.floor(Math.random() * neighbors.length)];
+            }
+          }
+          
+          if(!idx && idx !== 0) {
+            const available = playerCells.map((v, i) => v === 0 || v === 1 ? i : null).filter(x => x !== null);
+            idx = available.length > 0 ? available[Math.floor(Math.random() * available.length)] : -1;
+          }
+        }
+        else { // easy
+          // Просто рандом
+          const available = playerCells.map((v, i) => v === 0 || v === 1 ? i : null).filter(x => x !== null);
+          idx = available.length > 0 ? available[Math.floor(Math.random() * available.length)] : -1;
+        }
+
+        if(idx >= 0) {
           if(playerCells[idx] === 1) {
             playerCells[idx] = 2;
+            lastHitIdx = idx;
             playerHealth--;
             info.textContent = '💥 Вас поразили!';
             if(playerHealth === 0) {
@@ -1183,10 +1429,31 @@
             }
           } else {
             playerCells[idx] = 2;
+            lastHitIdx = -1;
             info.textContent = '😊 Противник промахнулся';
           }
           renderBoards();
         }
+      };
+
+      difficultyBtn.onclick = () => {
+        const levels = ['easy', 'medium', 'hard'];
+        const names = ['Легко', 'Среднее', 'Сложно'];
+        const idx = levels.indexOf(difficulty);
+        const nextIdx = (idx + 1) % levels.length;
+        difficulty = levels[nextIdx];
+        difficultyBtn.textContent = 'Уровень: ' + names[nextIdx];
+        
+        playerCells = Array(size * size).fill(0);
+        enemyCells = Array(size * size).fill(0);
+        playerHealth = 6;
+        enemyHealth = 6;
+        lastHitIdx = -1;
+        hitStreak = [];
+        placeShips(playerCells);
+        placeShips(enemyCells);
+        info.textContent = 'Ваш ход - атакуйте поле противника';
+        renderBoards();
       };
 
       renderBoards();
