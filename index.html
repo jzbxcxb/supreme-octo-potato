@@ -115,6 +115,8 @@
         .buy-btn { background:var(--header-gradient); color:white; border:none; padding:10px 15px; border-radius:10px; cursor:pointer; font-size:12px; font-weight:bold; transition:all .3s }
         .buy-btn:active { transform:scale(.95) }
         .btn-secondary { background:#f3f4f6; color:#333 }
+        .btn-danger { background:#dc2626; color:white }
+        .btn-danger:hover { background:#b91c1c }
         .tag-active { background:#e6fffa; color:#059669; padding:6px 10px; border-radius:999px; font-weight:600 }
         
         /* Backgrounds */
@@ -149,11 +151,14 @@
         
         /* Settings */
         .settings-content { padding:20px }
-        .setting-group { margin-bottom:20px }
+        .setting-group { margin-bottom:25px }
         .setting-label { font-size:14px; font-weight:bold; color:var(--text-primary); margin-bottom:10px; display:block }
         .theme-buttons { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px }
         .theme-btn { padding:12px; border:2px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); border-radius:10px; cursor:pointer; font-weight:bold; transition:all .3s }
         .theme-btn.active { background:var(--header-gradient); color:white; border-color:#667eea; box-shadow:0 4px 12px rgba(102, 126, 234, 0.3) }
+        .reset-button { width:100%; padding:12px; background:#dc2626; color:white; border:none; border-radius:10px; cursor:pointer; font-weight:bold; font-size:14px; transition:all .3s }
+        .reset-button:hover { background:#b91c1c; transform:translateY(-2px); box-shadow:0 4px 12px rgba(220, 38, 38, 0.3) }
+        .reset-button:active { transform:scale(.98) }
         
         /* Responsive */
         @media (max-width:520px) { #app { height:100vh } .menu-grid { grid-template-columns:1fr } .menu-tab.large { grid-column:span 1 } }
@@ -264,6 +269,10 @@
                             <button class="theme-btn" onclick="app.setTheme('dark')">🌙 Тёмная</button>
                             <button class="theme-btn" onclick="app.setTheme('colorful')">🌈 Цветная</button>
                         </div>
+                    </div>
+                    <div class="setting-group">
+                        <label class="setting-label">Опасная зона:</label>
+                        <button class="reset-button" onclick="app.resetAllAchievements()">⚠️ Обнулить все достижения</button>
                     </div>
                 </div>
             </div>
@@ -419,6 +428,17 @@
                 });
                 const activeBtn = document.querySelector(`.theme-btn[onclick="app.setTheme('${this.state.theme}')"]`);
                 if (activeBtn) activeBtn.classList.add('active');
+            },
+
+            resetAllAchievements() {
+                if (confirm('⚠️ Вы уверены? Это обнулит все коины и достижения!')) {
+                    this.state.shopCoins = 0;
+                    this.state.ratingCoins = 0;
+                    this.state.owned = { skins: [], backgrounds: [] };
+                    this.state.active = { skin: null, background: null };
+                    this.save();
+                    this.showModal('✓ Успешно', 'Все достижения обнулены!');
+                }
             },
 
             initShopUI() {
